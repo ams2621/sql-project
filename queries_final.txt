@@ -1,0 +1,63 @@
+     Investigation of relational database
+
+Query 1: /*The following categories are considered family movies: Animation, Children, Classics, Comedy, Family and Music.Create a query that lists each movie, the film category it is classified in, and the number of times it has been rented out? */
+
+SELECT fi.title as film_title, 
+       cat.name as category_name,
+       COUNT(ren.rental_id) as rental_count
+ FROM film_category fcat
+ JOIN category cat
+ ON cat.category_id = fcat.category_id
+ JOIN film fi
+ ON fi.film_id = fcat.film_id
+ JOIN inventory inv
+ ON inv.film_id = fi.film_id
+ JOIN rental ren
+ ON ren.inventory_id = inv.inventory_id
+ WHERE cat.name IN ('Animation', 'Children', 'Classics', 'Comedy', 'Family', 'Music')
+GROUP BY 1, 2
+ORDER BY 2, 1;
+
+Query 2 : /*What is the distribution of family-friendly movies among the film categories and rental duration categories ?*/
+
+SELECT tab1.name, tab1.standard_quartile, COUNT(tab1.standard_quartile)
+FROM
+( SELECT fi.title, cat.name , fi.rental_duration, NTILE(4) OVER (ORDER BY fi.rental_duration) AS          standard_quartile
+  FROM film_category fcat
+  JOIN category cat
+  ON cat.category_id = fcat.category_id
+  JOIN film fi
+  ON fi.film_id = fcat.film_id
+  WHERE cat.name IN ('Animation', 'Children', 'Classics', 'Comedy', 'Family', 'Music')) tab1 
+GROUP BY 1, 2
+ORDER BY 1, 2;
+
+	
+Query 3: /*Find out how the two stores compare in their count of rental orders during every month for all the years we have data for ?*/
+
+SELECT DATE_PART('month',ren.rental_date) AS rental_month,
+	       DATE_PART('year',ren.rental_date) AS rental_year,
+	       stor.store_id,
+	       COUNT(*) AS rental_count
+  FROM rental ren
+  JOIN payment pay
+  ON ren.rental_id = pay.rental_id
+  JOIN staff staf
+  ON pay.staff_id = staf.staff_id
+  JOIN store stor
+  ON staf.store_id = stor.store_id
+  GROUP BY 1,2,3
+  ORDER BY rental_count DESC;
+
+	
+Query 4: /*We need to know how the length of rental duration of these family-friendly movies compares to the duration that all movies are rented for. Provide a table with the movie titles and divide them into 4 levels (first_quarter, second_quarter, third_quarter, and final_quarter) based on the quartiles (25%, 50%, 75%) of the rental duration for movies across all categories? Make sure to also indicate the category that these family-friendly movies fall into./*
+
+
+SELECT fil.title, cat.name, fil.rental_duration, NTILE(4) OVER (ORDER BY fil.rental_duration) AS                      standard_quartile
+ FROM film_category fcat
+ JOIN category cat
+ ON cat.category_id = fcat.category_id
+ JOIN film fil
+ ON fil.film_id = fcat.film_id
+ WHERE cat.name IN ('Animation', 'Children', 'Classics', 'Comedy', 'Family', 'Music')
+ ORDER BY fil.rental_duration;
